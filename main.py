@@ -1,6 +1,13 @@
 from app.modules.module_1.implementations import (
-    Base1SubClass1, Base1SubClass2
+    TrafficLight,
+    SpeedCamera,
+    IntersectionSensor,
+    RoadConditionSensor,
+    SimulationClock,
+    IncidentManagerService,
+    TrafficService,
 )
+from app.modules.module_1.repository import TrafficRepository
 
 from app.modules.module_2.implementations import (
     Base2SubClass1, Base2SubClass2
@@ -15,23 +22,38 @@ from app.modules.module_4.implementations import (
 )
 
 def run_demo():
-    print("=== PROJECT MENU ===")
+    print("=== AKILLI SEHIR MENU ===")
+    print("\n--- Trafik Yonetim Sistemi Demo ---\n")
 
-    # Ogrenci 1 (Modul 1)
-    base_1 = [
-        Base1SubClass1("parametre1"),
-        Base1SubClass2("parametre2")
+    # Ogrenci 1 (Modul 1) => Trafik Yonetim Sistemi
+    traffic_repo = TrafficRepository.initialize_default()
+    traffic_service = TrafficService.create_zone_service("Sehir-Merkezi")
+    traffic_clock = SimulationClock(start_hour=17)
+    traffic_incident_manager = IncidentManagerService(traffic_repo)
+
+    traffic_elements = [
+        TrafficLight("TL-100", "1st St & A Ave", "Active", "Kirmizi"),
+        SpeedCamera("SC-100", "1st St", "Active", 120, speed_limit=60),
+        RoadConditionSensor("RCS-100", "Highway 1", "Active", road_temperature=-5, moisture=45),
+        IntersectionSensor("IS-100", "A Ave & B Ave", "Active", sensitivity=8),
     ]
-    for n in base_1:
-        n.method1()
+    # Register elements
+    for e in traffic_elements:
+        traffic_repo.add(e)
+        traffic_service.register_device(e)
+    print("\n")
+    
+    # Simulate time changes and system evaluations
+    traffic_service.syncing_with_clock(traffic_clock)
+    traffic_service.evaluate_city_safety()  #Speed/Ice check
 
     # Ogrenci 2 (Modul 2)
     base_2 = [
         Base2SubClass1("parametre3"),
         Base2SubClass2("parametre4")
     ]
-    for n in base_2:
-        n.method2()
+    for e in base_2:
+        e.method2()
 
         
     # Ogrenci 3 (Modul 3)
