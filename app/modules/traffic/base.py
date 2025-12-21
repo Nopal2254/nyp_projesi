@@ -12,6 +12,7 @@ class TrafficElement(ABC): # [cite: 73]
     Trafik sistemindeki tüm fiziksel cihazlar (Işık, Kamera, Sensör) 
     için temel soyut sınıf.
     """
+    print
 
     def __init__(self, element_id: str, location: str, status: str = "Active"):
         """
