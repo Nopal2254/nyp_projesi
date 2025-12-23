@@ -1,13 +1,6 @@
 # repository.py
-from app.modules.emergency.base import EmergencyUnit
+from app.modules.emergency.base import EmergencyUnit,Incident
 from typing import List,Optional,Dict
-from app.modules.emergency.implementations import (
-    FireDepartment,
-    Ambulance,
-    PoliceUnit,
-    HazmatUnit,
-    Incident)
-
 class EmergencyRepository:
     def __init__(self):
         self._units:Dict[str,EmergencyUnit] = {}
@@ -51,10 +44,11 @@ class EmergencyRepository:
     def operational_stats(self)-> dict:
         total = len(self._units)
         available = len([u for u in self._units.values() if u.availability])
-
+        percentage = (available/total *100) if total > 0 else 0
         return{
             "total_units":total,
             "available_units":available,
-            "readiness_sco  re":(available/total * 100) if total > 0 else 0,
-            "active_incidents" : len(self.incident_history)
+            "readiness_score":(available/total * 100) if total > 0 else 0,
+            "active_incidents" : len(self.incident_history),
+            "readiness_percentage":round(percentage, 2)
         }

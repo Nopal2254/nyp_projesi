@@ -7,6 +7,14 @@ class UnitStatus(Enum):
     ON_SCENE = "On Scene"
     MAINTENANCE = "Maintenance"
 
+class Incident:
+    def __init__(self,incident_id:str,incident_type:str,severity:int,location:str,description:str):
+        self.incident_id = incident_id
+        self.incident_type = incident_type
+        self.severity = severity
+        self.location = location
+        self.description = description
+
 class EmergencyUnit(ABC):
     def __init__(self, unit_id:str, unit_type:str, location:str):
         self.__unit_id = unit_id
@@ -33,27 +41,13 @@ class EmergencyUnit(ABC):
     def unit_id(self):
         return self.__unit_id
 
-    @unit_id.setter
-    def unit_id(self, value):
-        self.__unit_id = value
-
     @property
     def unit_type(self):
         return self.__unit_type
-    
-    @unit_type.setter
-    def unit_type(self, value):
-        self.__unit_type = value
 
     @property
     def current_location(self):
         return self.__current_location
-    
-    @current_location.setter
-    def current_location(self, value):
-        if not value or not isinstance(value, str):
-            raise ValueError("Location must be non-empty string")
-        self.__current_location = value
 
     @property
     def availability(self):
@@ -63,8 +57,27 @@ class EmergencyUnit(ABC):
             return False
     
     @property
-    def status(self,new_status:UnitStatus):
-        if not isinstance(new_status,UnitStatus):
-            raise ValueError("Invalid status type provided")
-        self.__status = new_status
-        print(f"Unit {self.__unit_id} status updated to {new_status.value}")
+    def status(self)->UnitStatus:
+        return self.__status
+
+    @unit_id.setter
+    def unit_id(self, value):
+        self.__unit_id = value
+    
+    @unit_type.setter
+    def unit_type(self, value):
+        self.__unit_type = value
+
+    
+    @current_location.setter
+    def current_location(self, value):
+        if not value or not isinstance(value, str):
+            raise ValueError("Location must be non-empty string")
+        self.__current_location = value
+    
+    @status.setter
+    def status(self,value:UnitStatus):
+        if not isinstance(value,UnitStatus):
+            raise ValueError("Invalid status type")
+        self.__status = value
+

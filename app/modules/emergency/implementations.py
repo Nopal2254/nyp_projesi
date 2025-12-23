@@ -1,86 +1,76 @@
-from app.modules.emergency.base import EmergencyUnit, UnitStatus
+from app.modules.emergency.base import (
+    EmergencyUnit,
+    UnitStatus,
+    Incident
+    )
 from app.modules.emergency.repository import EmergencyRepository
 
-class Incident:
-    incident_id:str
-    incident_type:str
-    severity:int
-    location:str
-    description:str
-
 class FireDepartment(EmergencyUnit):
-    def __init__(self, unit_id, location, water_capacity: int, staff_count: int):
+    def __init__(self, unit_id,location, water_capacity: int):
         super().__init__(unit_id, "Fire", location)
-        self.water_capacity = water_capacity
-        self.current_water = water_capacity
-        self.staff_count = staff_count
-        self.has_ladder = True
-
-    @property
-    def water_level_percentage(self) -> float:
-        return (self.current_water / self.water_capacity) * 100
+        self._water_capacity = water_capacity
+        self._current_water = water_capacity
 
     @property
     def current_water(self):
-        return self.current_water
+        return self._current_water
     
     @current_water.setter
     def current_water(self,value):
-        if value < 0:
-            self.current_water = 0
+        if value <0:
+            self._current_water = 0
             self.status = UnitStatus.MAINTENANCE
         else:
-            self.current_water = value
+            self._current_water = value
 
     def respond_to_incident(self, incident_id:str, severity:int):
-        if self.availability and self.current_water > 500:
+        if self.availability and self._current_water > 500:
             self.status = UnitStatus.ON_SCENE
             print(f"{self.unit_id} bu {incident_id}'i calisiyor")
             return True
+        
         print(f"{self.unit_id} cannot respond (Low water or busy)")
         return False
     
-    def calculate_estimated_arrival(self, destination):
+    def calculate_eta(self, destination):
         return 12.5  #Just random value
     
     def get_unit_capabilities(self):
-        return ["Fire Supression","Search or Rescue","Hydrant Connection"]
+        return ["Fire Supression","Search or Rescue"]
 
 class Ambulance(EmergencyUnit):
     def __init__(self, unit_id, location, medical_tier: str):
         super().__init__(unit_id, "Medical", location)
-        self.medical_tier = medical_tier # Specific attribute [cite: 132]
-        self.patient_on_board = False
+        self._medical_tier = medical_tier
 
     def respond_to_incident(self, incident_id:str, severity:int):
         if self.availability:
             self.status = UnitStatus.ON_SCENE
             print(f"Ambulance {self.unit_id} bu {incident_id} calisiyor")
             return True
+        
         return False
     
-    def calculate_estimated_arrival(self, destination):
-        return 8
+    def calculate_eta(self, destination):
+        return 8.0
     
     def get_unit_capabilities(self):
         return ["Emergency Medical Care","Patient Transport"]
     
 class PoliceUnit(EmergencyUnit):
-    def __init__(self, unit_id, location, patrol_zone: str,officer_count:int):
+    def __init__(self, unit_id, location, patrol_zone: str):
         super().__init__(unit_id, "Security", location)
-        self.patrol_zone = patrol_zone
-        self.officer_count = officer_count
-        self.is_armed = True
+        self._patrol_zone = patrol_zone
 
     @property
     def patrol_zone(self):
-        return self.patrol_zone
+        return self._patrol_zone
     
     @patrol_zone.setter
     def patrol_zone(self,value):
         if not value:
             raise ValueError("Patrol zone cant be empty")
-        self.patrol_zone = value
+        self._patrol_zone = value
     
     @property
     def officer_count(self):
@@ -91,10 +81,9 @@ class PoliceUnit(EmergencyUnit):
             print(f"Unit {self.unit_id} is currently busy")
             return False
         if severity >= 4:
-            print(f"High alert : {self.unit_id} moving to high-risk scene")
+            print(f"High alert : {self.unit_id} moving to high-risk {incident_id} scene")
         else:
             print(f"Police unit {self.unit_id} respont to {incident_id}")
-        
         self.status = UnitStatus.ON_SCENE
         return True
 
@@ -102,16 +91,15 @@ class PoliceUnit(EmergencyUnit):
         return 5
 
     def get_unit_capabilities(self):
-        return ["Traffic Control","Public Safety","Investigation"]
+        return ["Traffic Control","Security"]
         
 class HazmatUnit(EmergencyUnit):
-    def __init__(self, unit_id, unit_type, location,protection_level):
+    def __init__(self, unit_id, location, protection_level):
         super().__init__(unit_id, "Radiation", location)
-        self.protection_level = protection_level
-        self.gas_mask_count = 10
+        self._protection_level = protection_level
 
     def respond_to_incident(self, incident_id, severity):
-        if severity > 3 and self.protection_level != "A":
+        if severity > 3 and self._protection_level != "A":
             print(f"Hazmat {self.unit_id} protection too low for the {incident_id} incident")
             return False
         
@@ -124,13 +112,13 @@ class HazmatUnit(EmergencyUnit):
         return 15
     
     def get_unit_capabilities(self):
-        return ["Chemical Detection","Decontamination","Radiation Monitoring"]
+        return ["Chemical Detection","Decontamination"]
     
 class EmergencyService:
-    def __init__(self):
+    def __init__(self,repository):
         self.activity_log = []
         self.active_incidents = {}
-        self.repo = EmergencyRepository
+        self.repo = repository
     
     def create_incident_report(self,incident_id:str,type:str,severity:int,location:str) -> Incident:
         if not (1 <= severity <= 5):
@@ -150,10 +138,10 @@ class EmergencyService:
     
     def generate_intervention_plan(self,incident:Incident,unit:EmergencyUnit) -> str:
         plan_steps = [
-            f"PLAN_ID :{incident.incident_id}-PLAN",
+            f"PLAN ID :{incident.incident_id}-PLAN",
             f"Assigned Unit:{unit.unit_id} {unit.unit_type}",
             f"Target Location: {incident.location}",
-            "---PROCEDURAL STEPS---"
+            "\n---PROCEDURAL STEPS---"
         ]
         
         if unit.unit_type == "Fire":
@@ -188,14 +176,14 @@ class EmergencyService:
     def dispatch_nearest_unit(self,incident:Incident):
         available_unit = self.repo.get_all_unit()
 
-        suitable_unit = [u for u in available_unit if u.unit_type in incident.incident_type]
+        suitable_unit = [u for u in available_unit if u.unit_type in incident.incident_type and u.availability]
 
         if not suitable_unit:
             return f"No available {incident.incident_type} unit for incident {incident.incident_id} !"
 
         unit = suitable_unit[0]
         success = unit.respond_to_incident(incident.incident_id,incident.severity)
-
+        
         if success:
-            return f"Dispatch Successfull : {unit.unit_id} moving into {incident.location}"
-        return f"Dispatch failed {unit.unit_id} reject the call"
+            return f"Dispatch Successful {unit.unit_id} dispatched into {incident.location}"
+        return f"Dispatch failed"
