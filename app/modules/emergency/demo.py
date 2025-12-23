@@ -1,13 +1,13 @@
 from app.modules.emergency.base import (
     EmergencyUnit,
-    UnitStatus
+    UnitStatus,
+    Incident
     )
 from app.modules.emergency.implementations import (
     FireDepartment,
     Ambulance,
     PoliceUnit,
     HazmatUnit,
-    Incident,
     EmergencyService
     )
 from app.modules.emergency.repository import EmergencyRepository
@@ -27,7 +27,7 @@ def run_emergency_demo():
         FireDepartment("F-01","Sehir Merkezi",water_capacity=5000),
         FireDepartment("F-02","Sehir Merkezi",water_capacity=2500),
         Ambulance("A-01","City Hospital",medical_tier="A"),
-        PoliceUnit("P-01","Downtown",patrol_zone="Zone-1",officer_count=25),
+        PoliceUnit("P-01","Downtown",patrol_zone="Zone-1"),
         HazmatUnit("H-01","Industrial Park",protection_level="A")
     ]
 
@@ -38,8 +38,11 @@ def run_emergency_demo():
     #System readiness audit 
     print("\n[2] Performing Initial System Audit...")
     stats = repo.operational_stats()
-    print(f"System readiness: {stats['calculated_readniness_percentage']}%")
-    print(f"Status : {stats['system_status_indicator']}")
+    total = stats['total_units']
+    available = stats['available_units']
+    percentage = (available/total*100) if total > 0 else 0
+    print(f"System readiness: {percentage}%")
+    #print(f"Status : {stats['system_status_indicator']}")
 
     #1. Scenario : Fire Incident
     print("\n[3] Scenario: High Rise Fire reported !")
@@ -49,7 +52,7 @@ def run_emergency_demo():
         severity=4,
         location="Grand Plaza Hotel"
     )
-    #Dispatch method havent available rn
+    print(service.dispatch_nearest_unit(fire_vaka))
 
     unit_f01 = repo.get_unit_by_id("F-01")
     if unit_f01:
@@ -64,7 +67,7 @@ def run_emergency_demo():
         severity=3,
         location="Intersection 5th & Main"
     )
-    #Dispatch method havent available rn
+    print(service.dispatch_nearest_unit(medical_vaka))
 
     #3.Scenario : Security Breach
     print(f"\n[5]Scenario: Suspicious activity in Zone 1")
@@ -74,7 +77,7 @@ def run_emergency_demo():
         severity=2,
         location="City Bank"
     )
-    #Dispatch method havent available rn
+    print(service.dispatch_nearest_unit(secuirty_vaka))
 
     #Final System Review
     print("\n" + "="*10)
@@ -83,12 +86,13 @@ def run_emergency_demo():
 
     logs = repo.get_system_log()
     print("Showing last 5 events")
-    for e in logs[-5]:
+    for e in logs[-5:]:
         print(e)
 
     final_stats = repo.operational_stats()
-    print(f"Simulation End. Final Readiness: {final_stats['calculcate_readiness_percentage']}%")
-
+    print(f"Simulation End. Final Readiness: {final_stats['readiness_percentage']}%")
 
 if __name__ == "__main__":
     run_emergency_demo()
+
+#py -m app.modules.emergency.demo

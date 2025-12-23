@@ -1,11 +1,13 @@
 import unittest
-from app.modules.emergency.base import UnitStatus
+from app.modules.emergency.base import (
+    UnitStatus,
+    Incident
+    )
 from app.modules.emergency.implementations import(
     FireDepartment,
     Ambulance,
     PoliceUnit,
     HazmatUnit,
-    Incident,
     EmergencyService
 )
 from app.modules.emergency.repository import (
@@ -15,10 +17,10 @@ from app.modules.emergency.repository import (
 class TestEmergencyModule(unittest.TestCase):
     def setUp(self):
         self.repo = EmergencyRepository()
-        self.service = EmergencyService()
+        self.service = EmergencyService(self.repo)
 
         self.fire_unit = FireDepartment("F-TEST","North",water_capacity=10000)
-        self.police_unit = PoliceUnit("P-TEST","South","Zone A",officer_count=50)
+        self.police_unit = PoliceUnit("P-TEST","South","Zone A")
 
         self.repo.add_unit(self.fire_unit)
         self.repo.add_unit(self.police_unit)
@@ -44,11 +46,11 @@ class TestEmergencyModule(unittest.TestCase):
 
     def test_repo_stats(self):
         stats = self.repo.operational_stats()
-        self.assertEqual(stats["calculated_readiness_percentage"],100.0)
+        self.assertEqual(stats["readiness_percentage"],100.0)
 
         self.police_unit.status = UnitStatus.ON_SCENE
         new_stats = self.repo.operational_stats()
-        self.assertEqual(new_stats["calculated_readiness_percentage"],50.0)
+        self.assertEqual(new_stats["readiness_percentage"],50.0)
 
     def test_dispatch_success(self):
         vaka = Incident("V-01","Fire",3,"Mall","Small Fire")
@@ -64,7 +66,7 @@ class TestEmergencyModule(unittest.TestCase):
         plan = self.service.generate_intervention_plan(vaka,self.police_unit)
 
         self.assertIn("PLAN ID",plan)
-        self.assertIn("Secure Perimeter",plan)
+        self.assertIn("safety perimeter",plan)
 
 if __name__ == "__main__":
     unittest.main()
