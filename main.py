@@ -127,7 +127,7 @@ def emergency_module_menu(emergency_service):
             print("Geçersiz tür seçildi!")
             return
         emergency_service.repo.add_unit(new_unit)
-        print(f"[SISTEM] {u_id}basariyla sisteme kaydildi")
+        print(f"[SISTEM] {u_id} basariyla sisteme kaydildi")
 
     elif choice == "3":
         return   
