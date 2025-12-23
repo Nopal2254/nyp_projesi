@@ -172,7 +172,7 @@ class EmergencyService:
     def total_active_cases(self):
         return len(self.active_incidents)
     
-    #ASDASDASDASD
+    #dispatching some unit
     def dispatch_nearest_unit(self,incident:Incident):
         available_unit = self.repo.get_all_unit()
 

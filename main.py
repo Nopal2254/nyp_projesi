@@ -13,6 +13,16 @@ from datetime import datetime
 from app.modules.traffic.implementations import TrafficLight, IntersectionSensor, TrafficService
 from app.modules.traffic.repository import TransportRepository
 
+# Acil Durum modulu
+from app.modules.emergency.implementations import (
+    FireDepartment,
+    Ambulance,
+    PoliceUnit,
+    HazmatUnit,
+    EmergencyService    
+    )
+from app.modules.emergency.repository import EmergencyRepository
+
 # NOT: Diğer modüller (Enerji, Acil Durum, Sosyal Hizmetler) henüz tam yazılmadığı 
 # için bu aşamada 'Mock' (geçici/taslak) yapılar veya temel sınıflar kullanılabilir.
 
@@ -31,6 +41,97 @@ def simulate_emergency_interaction(location, density_level):
     print(f"\n[SİSTEM MESAJI] Etkileşim Tetiklendi: Trafik Modülü -> Acil Durum Modülü")
     print(f"[BİLGİ] {location} bölgesinde yoğunluk {density_level} seviyesine ulaştı.")
     print(f"[AKSİYON] Acil Durum birimleri (Ambulans/İtfaiye) alternatif rotalara yönlendiriliyor.")
+
+def display_menu():
+    print("\n---Ana Menu ---")
+    print("1. Trafik Modulu")
+    print("2. Acil Cikis Modulu")
+    print("3. Cikis")
+    return input("Seciminizi yapin: ")
+
+def traffic_module_menu(traffic_manager,main_sensor,pedestrian_light):
+    # Simülasyon için araç sayısını doğrudan yüksek bir değere ayarlıyoruz
+    main_sensor.vehicle_count = 92 
+    
+    print("\n" + "-"*15 + " Şehir Trafik Akışı İzleniyor " + "-"*15)
+    print(f"[{main_sensor.location}] Anlık Araç Sayısı: {main_sensor.vehicle_count}")
+    
+    # Yoğunluk hesaplama
+    current_density = traffic_manager.calculate_intersection_density(main_sensor.element_id)
+    
+    # Eğer yoğunluk "Kritik" ise (92 araç ile öyle olmalı), tüm süreci yazdır
+    if current_density == "Kritik":
+        simulate_emergency_interaction(main_sensor.location, current_density)
+        
+        # Trafik ışığı optimizasyonu
+        opt_msg = traffic_manager.optimize_light_timing(pedestrian_light.element_id, current_density)
+        print(f"[TRAFİK KONTROL] {opt_msg}")
+    else:
+        print(f"[BİLGİ] Trafik akışı normal seyrediyor. (Yoğunluk: {current_density})")
+    
+    print("-" * 60)
+
+
+def emergency_module_menu(emergency_service):
+    print("\n--- Acil Durum Modülü ---")
+    print("1. Olay Raporu Oluştur")
+    print("2. Yeni Acil Durum Birimi Kaydet")
+    print("3. Geri Dön")
+    choice = input("Seçiminizi yapın: ")
+
+    if choice == "1":
+        incident_id = input("Olay ID: ")
+        incident_type = input("Olay Türü (Fire/Medical/Security): ")
+        severity = int(input("Şiddet (1-5): "))
+        location = input("Konum: ")
+
+        incident = emergency_service.create_incident_report(incident_id, incident_type, severity, location)
+        print(f"\n[SISTEM] Olay Raporu Olusturuldu: {incident.description}")
+
+        available_units = emergency_service.repo.get_all_unit()
+        suitable_units = [u for u in available_units if u.unit_type == incident.incident_type and u.availability]
+        
+        if not suitable_units:
+            print(f"[HATA] Uygun {incident_type} birimi bulunamadi")
+        else:
+            selected_unit = suitable_units[0]
+            
+            print("\n" + "="*20 + " MÜDAHALE PLANI " + "="*20)
+            plan = emergency_service.generate_intervention_plan(incident, selected_unit)
+            print(plan)
+            print("="*56)
+
+            print(f"\n[SİSTEM] Birim yönlendiriliyor...")
+            result = emergency_service.dispatch_nearest_unit(incident)
+            print(f"[SONUÇ] {result}")
+
+    elif choice == "2":
+        print("\n--Yeni  Birim Kaydi--")
+        u_type = input("Birim Turu (1.Itfaiye, 2.Ambulance, 3.Polis, 4.Hazmat): ")
+        u_id = input("Birim ID: ")
+        u_loc = input("Gorev Bolgesi: ")
+
+        if u_type == "1":
+            water = int(input("Su kapasitesi (L): "))
+            new_unit = FireDepartment(u_id,u_loc,water)
+        elif u_type == "2":
+            tier = input("Tıbbi Seviye (Basic/Advanced): ")
+            new_unit = Ambulance(u_id, u_loc, tier)
+        elif u_type == "3":
+            zone = input("Devriye Bölgesi: ")
+            new_unit = PoliceUnit(u_id, u_loc, zone)
+        elif u_type == "4":
+            level = input("Koruma Seviyesi (A/B/C): ")
+            new_unit = HazmatUnit(u_id, u_loc, level)
+        else:
+            print("Geçersiz tür seçildi!")
+            return
+        emergency_service.repo.add_unit(new_unit)
+        print(f"[SISTEM] {u_id}basariyla sisteme kaydildi")
+
+    elif choice == "3":
+        return   
+
 
 def main():
     """Ana uygulama döngüsü ve senaryo yönetimi."""
@@ -52,25 +153,24 @@ def main():
     traffic_db.save(main_sensor)
     traffic_db.save(pedestrian_light)
 
+    #Acil durum modulu
+    emergency_db = EmergencyRepository()
+    emergency_service = EmergencyService(emergency_db)
+
+    while True:
+        choice = display_menu()
+
+        if choice == "1":
+            traffic_module_menu(traffic_manager,main_sensor,pedestrian_light)
+        elif choice == "2":
+            emergency_module_menu(emergency_service)
+        elif choice == "3":
+            print("Cikis yapiliyor...")
+            break
+        else:
+            print("Gecersiz secim,tekrar deneyin")
     # 3. SENARYO: YOĞUNLUK BAZLI YÖNETİM
     # ---------------------------------------------------------
-    print("\n--- Şehir Trafik Akışı İzleniyor ---")
-    
-    # Sensörden gelen veriyi simüle edelim (PDF: Yoğunluk hesaplama)
-    main_sensor.vehicle_count = 92 # Kritik sınır
-    print(f"[{main_sensor.location}] Anlık Araç Sayısı: {main_sensor.vehicle_count}")
-
-    # Yoğunluk Analizi [cite: 83]
-    current_density = traffic_manager.calculate_intersection_density(main_sensor.element_id)
-    
-    # MODÜLLER ARASI ETKİLEŞİM 
-    if current_density == "Kritik":
-        simulate_emergency_interaction(main_sensor.location, current_density)
-        
-        # Trafik Işığı Optimizasyonu [cite: 84]
-        opt_msg = traffic_manager.optimize_light_timing(pedestrian_light.element_id, current_density)
-        print(f"[TRAFİK KONTROL] {opt_msg}")
-
     print("\n" + "="*60)
     print(f"{'SİSTEM BEKLEME MODUNDA':^60}")
     print("="*60)
