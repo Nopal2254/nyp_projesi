@@ -159,6 +159,14 @@ class EmergencyService:
             plan_steps.append("1. Perform initial triage.")
             plan_steps.append("2. Stabilize patient for transport.")
             plan_steps.append("3. Alert nearest Hospital ER.")
+        
+        elif unit.unit_type == "Radiation":
+            plan_steps.append("1. Deploy Geiger counters to map the hot zone.")
+            plan_steps.append("2. Initialize containment shield protocols.")
+            if incident.severity > 3:
+                plan_steps.append("3. Setup emergency decontamination shower station.")
+            else:
+                plan_steps.append("3. Monitor leak and wait for specialized cleanup.")
 
         plan_steps.append("--- END OF PLAN ---")
         return "\n".join(plan_steps)
