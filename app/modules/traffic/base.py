@@ -58,7 +58,6 @@ class TrafficElement(ABC): # [cite: 73]
         pass
 
     # --- SINIF METOTLARI (Class Methods) ---
-    # PDF'de istenen 2 adet sınıf metodu gereksinimini karşılar. 
 
     @classmethod
     def create_maintenance_element(cls, element_id: str, location: str):
@@ -71,12 +70,12 @@ class TrafficElement(ABC): # [cite: 73]
         return "v1.0.2 - Traffic Management Core"
 
     # --- STATİK METOTLAR (Static Methods) ---
-    # PDF'de istenen 2 adet statik metot gereksinimini karşılar. 
 
     @staticmethod
-    def validate_id(element_id: str) -> bool:
-        """ID formatının doğruluğunu kontrol eder (Örn: TRF-123)."""
-        return element_id.startswith("TRF-") and len(element_id) > 4
+
+    def is_valid_status(status: str) -> bool:
+        valid_statuses = ["Active", "Inactive", "Maintenance"]
+        return status in valid_statuses
 
     @staticmethod
     def calculate_uptime(install_date: datetime) -> int:

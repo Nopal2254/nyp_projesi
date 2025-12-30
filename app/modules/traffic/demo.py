@@ -4,8 +4,8 @@ Bu dosya, modülün tek başına nasıl çalıştığını simüle eder ve
 polimorfizm (çok biçimlilik) prensibini gösterir. [cite: 53, 54]
 """
 
-from .implementations import TrafficLight, SpeedCamera, IntersectionSensor, TrafficService
-from .repository import TransportRepository
+from app.modules.traffic.implementations import TrafficLight, SpeedCamera, IntersectionSensor, TrafficService
+from app.modules.traffic.repository import TransportRepository
 import time
 
 def run_traffic_demo():
