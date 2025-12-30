@@ -6,20 +6,20 @@ bellek üzerinde (in-memory) yönetildiği, sorgulandığı ve depolandığı ka
 """
 
 from typing import List, Optional, Dict
-from .base import TrafficElement
+from app.modules.traffic.base import TrafficElement
 import datetime
 
 class TransportRepository:
     """
-    Trafik bileşenleri için bellek içi veri yönetim sınıfı. [cite: 48, 51]
-    Bu sınıf, bir veritabanı gibi davranarak verilerin eklenmesi, silinmesi 
+    Trafik bileşenleri için bellek içi veri yönetim sinifi. [cite: 48, 51]
+    Bu sinif, bir veritabani gibi davranarak verilerin eklenmesi, silinmesi 
     ve filtrelenmesi işlemlerini yürütür.
     """
 
     def __init__(self):
         """
-        Depo yapısını başlatır. Veriler hızlı erişim için sözlük (dict) 
-        yapısında tutulur. [cite: 51]
+        Depo yapisini başlatır. Veriler hizli erişim için sözlük (dict) 
+        yapisinda tutulur. [cite: 51]
         """
         # Key: element_id, Value: TrafficElement nesnesi
         self._elements: Dict[str, TrafficElement] = {}

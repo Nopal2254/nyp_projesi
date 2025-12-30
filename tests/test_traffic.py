@@ -37,7 +37,7 @@ class TestTrafficModule(unittest.TestCase):
 
     def test_repository_filter_location(self):
         """Lokasyona göre filtreleme test edilir. [cite: 89]"""
-        results = self.repo.find_by_location("Test Kavşağı")
+        results = self.repo.find_all_by_location("Test Kavşağı")
         self.assertEqual(len(results), 2) # Işık ve Sensör
 
     # 2. SİMÜLASYON TESTLERİ [cite: 92, 94]
